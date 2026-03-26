@@ -54,28 +54,42 @@ execute function public.handle_updated_at();
 alter table public.boards enable row level security;
 alter table public.tasks enable row level security;
 
-create policy if not exists "boards_select_own" on public.boards
+drop policy if exists boards_select_own on public.boards;
+create policy boards_select_own on public.boards
 for select using (auth.uid() = user_id);
-create policy if not exists "boards_insert_own" on public.boards
+
+drop policy if exists boards_insert_own on public.boards;
+create policy boards_insert_own on public.boards
 for insert with check (auth.uid() = user_id);
-create policy if not exists "boards_update_own" on public.boards
+
+drop policy if exists boards_update_own on public.boards;
+create policy boards_update_own on public.boards
 for update using (auth.uid() = user_id);
-create policy if not exists "boards_delete_own" on public.boards
+
+drop policy if exists boards_delete_own on public.boards;
+create policy boards_delete_own on public.boards
 for delete using (auth.uid() = user_id);
 
-create policy if not exists "tasks_select_own" on public.tasks
+drop policy if exists tasks_select_own on public.tasks;
+create policy tasks_select_own on public.tasks
 for select using (
   exists (select 1 from public.boards b where b.id = board_id and b.user_id = auth.uid())
 );
-create policy if not exists "tasks_insert_own" on public.tasks
+
+drop policy if exists tasks_insert_own on public.tasks;
+create policy tasks_insert_own on public.tasks
 for insert with check (
   exists (select 1 from public.boards b where b.id = board_id and b.user_id = auth.uid())
 );
-create policy if not exists "tasks_update_own" on public.tasks
+
+drop policy if exists tasks_update_own on public.tasks;
+create policy tasks_update_own on public.tasks
 for update using (
   exists (select 1 from public.boards b where b.id = board_id and b.user_id = auth.uid())
 );
-create policy if not exists "tasks_delete_own" on public.tasks
+
+drop policy if exists tasks_delete_own on public.tasks;
+create policy tasks_delete_own on public.tasks
 for delete using (
   exists (select 1 from public.boards b where b.id = board_id and b.user_id = auth.uid())
 );

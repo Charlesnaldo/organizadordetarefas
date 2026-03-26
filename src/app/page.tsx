@@ -49,10 +49,10 @@ type FormState = {
 };
 
 const columns: Column[] = [
-  { id: "backlog", title: "Backlog", accent: "from-cyan-400 via-sky-400 to-blue-500", surface: "from-slate-900/95 to-slate-800/85" },
-  { id: "doing", title: "Em Progresso", accent: "from-amber-300 via-orange-400 to-rose-400", surface: "from-slate-950/95 to-slate-800/90" },
-  { id: "review", title: "Revisao", accent: "from-fuchsia-400 via-pink-400 to-rose-500", surface: "from-slate-900/95 to-slate-700/90" },
-  { id: "done", title: "Concluido", accent: "from-emerald-300 via-teal-400 to-cyan-500", surface: "from-slate-950/95 to-slate-800/95" },
+  { id: "backlog", title: "Começar", accent: "from-sky-400 to-blue-500", surface: "from-white to-slate-50/96" },
+  { id: "doing", title: "Em Progresso", accent: "from-violet-400 to-indigo-500", surface: "from-white to-indigo-50/70" },
+  { id: "review", title: "Revisao", accent: "from-amber-400 to-orange-400", surface: "from-white to-amber-50/70" },
+  { id: "done", title: "Concluido", accent: "from-emerald-400 to-teal-500", surface: "from-white to-emerald-50/70" },
 ];
 
 const emptyFormState: FormState = {
@@ -70,9 +70,9 @@ const emptyFormState: FormState = {
 };
 
 const priorityTone: Record<Priority, string> = {
-  Alta: "bg-rose-400/18 text-rose-100 ring-1 ring-rose-300/20",
-  Media: "bg-amber-300/18 text-amber-100 ring-1 ring-amber-200/20",
-  Baixa: "bg-emerald-400/18 text-emerald-100 ring-1 ring-emerald-200/20",
+  Alta: "bg-rose-50 text-rose-700 ring-1 ring-rose-200",
+  Media: "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
+  Baixa: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
 };
 
 export default function Home() {  const supabase = useMemo(() => getSupabaseBrowserClient(), []);
@@ -523,12 +523,12 @@ export default function Home() {  const supabase = useMemo(() => getSupabaseBrow
 
   if (!supabase) {
     return (
-      <main className="relative min-h-screen overflow-hidden px-5 py-8 text-slate-50 sm:px-8 lg:px-10">
+      <main className="relative min-h-screen overflow-hidden px-4 py-6 text-slate-900 sm:px-8 lg:px-10">
         <section className="relative mx-auto flex min-h-screen max-w-md items-center">
-          <div className="glass-panel w-full rounded-[2rem] p-6 sm:p-8">
-            <div className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-100">Configurar Supabase</div>
-            <h1 className="mt-4 font-[family:var(--font-space-grotesk)] text-3xl font-semibold text-white">Faltam variaveis publicas do Supabase.</h1>
-            <p className="mt-3 text-sm leading-7 text-slate-300">Preencha NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY em .env.local para habilitar login e boards.</p>
+          <div className="glass-panel w-full rounded-[1rem] p-4 sm:p-5">
+            <div className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-600">Configurar Supabase</div>
+            <h1 className="mt-4 font-[family:var(--font-space-grotesk)] text-xl font-medium text-slate-900">Faltam variáveis públicas do Supabase.</h1>
+            <p className="mt-3 text-sm leading-7 text-slate-600">Preencha NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY em .env.local para habilitar login e boards.</p>
           </div>
         </section>
       </main>
@@ -537,23 +537,23 @@ export default function Home() {  const supabase = useMemo(() => getSupabaseBrow
 
   if (!session) {
     return (
-      <main className="relative min-h-screen overflow-hidden px-5 py-8 text-slate-50 sm:px-8 lg:px-10">
+      <main className="relative min-h-screen overflow-hidden px-4 py-6 text-slate-900 sm:px-8 lg:px-10">
         <div className="pointer-events-none absolute inset-0">
-          <div className="absolute left-[8%] top-10 h-40 w-40 rounded-full bg-cyan-400/18 blur-3xl" />
-          <div className="absolute right-[10%] top-32 h-52 w-52 rounded-full bg-fuchsia-500/16 blur-3xl" />
+          <div className="absolute left-[8%] top-10 h-40 w-40 rounded-full bg-sky-300/18 blur-3xl" />
+          <div className="absolute right-[10%] top-32 h-52 w-52 rounded-full bg-indigo-300/16 blur-3xl" />
         </div>
         <section className="relative mx-auto flex min-h-screen max-w-md items-center">
-          <div className="glass-panel w-full rounded-[2rem] p-6 sm:p-8">
-            <div className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-100">Tudlist Auth</div>
-            <h1 className="mt-4 font-[family:var(--font-space-grotesk)] text-4xl font-semibold text-white">Entre para gerenciar seus quadros.</h1>
-            <p className="mt-3 text-sm leading-7 text-slate-300">Use Supabase Auth para acessar boards separados por usuario.</p>
+          <div className="glass-panel w-full rounded-[1rem] p-4 sm:p-5">
+            <div className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-600">Organizador</div>
+            <h1 className="mt-4 font-[family:var(--font-space-grotesk)] text-4xl font-medium text-slate-900">Entre para gerenciar seus quadros.</h1>
+            <p className="mt-3 text-sm leading-7 text-slate-600">Entre com seu email para acessar seus quadros e tarefas.</p>
             <form className="mt-6 space-y-4" onSubmit={(event) => void handleAuthSubmit(event)}>
-              <input value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Email" className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-white outline-none" />
-              <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Senha" className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-white outline-none" />
-              <button type="submit" className="w-full cursor-pointer rounded-2xl bg-linear-to-r from-cyan-300 via-sky-400 to-blue-500 px-4 py-3 text-sm font-semibold text-slate-950">{loading ? "Processando..." : authMode === "signin" ? "Entrar" : "Criar conta"}</button>
+              <input value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Email" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none" />
+              <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Senha" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none" />
+              <button type="submit" className="w-full cursor-pointer rounded-xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(15,23,42,0.12)] hover:bg-slate-800">{loading ? "Processando..." : authMode === "signin" ? "Entrar" : "Criar conta"}</button>
             </form>
-            <button type="button" onClick={() => setAuthMode((current) => current === "signin" ? "signup" : "signin")} className="mt-4 cursor-pointer text-sm text-cyan-100">{authMode === "signin" ? "Criar conta" : "Ja tenho conta"}</button>
-            {error ? <div className="mt-4 rounded-2xl border border-rose-300/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">{error}</div> : null}
+            <button type="button" onClick={() => setAuthMode((current) => current === "signin" ? "signup" : "signin")} className="mt-4 cursor-pointer text-sm text-slate-600">{authMode === "signin" ? "Criar conta" : "Já tenho conta"}</button>
+            {error ? <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
           </div>
         </section>
       </main>
@@ -561,59 +561,59 @@ export default function Home() {  const supabase = useMemo(() => getSupabaseBrow
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden px-5 py-8 text-slate-50 sm:px-8 lg:px-10">
+    <main className="relative min-h-screen overflow-hidden px-4 py-6 text-slate-900 sm:px-8 lg:px-10">
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-[8%] top-10 h-40 w-40 rounded-full bg-cyan-400/18 blur-3xl" />
-        <div className="absolute right-[10%] top-32 h-52 w-52 rounded-full bg-fuchsia-500/16 blur-3xl" />
-        <div className="absolute bottom-0 left-1/3 h-48 w-48 rounded-full bg-emerald-400/14 blur-3xl" />
+        <div className="absolute left-[8%] top-10 h-40 w-40 rounded-full bg-sky-300/18 blur-3xl" />
+        <div className="absolute right-[10%] top-32 h-52 w-52 rounded-full bg-indigo-300/16 blur-3xl" />
+        <div className="absolute bottom-0 left-1/3 h-48 w-48 rounded-full bg-sky-200/16 blur-3xl" />
       </div>
       <section className="relative mx-auto flex w-full max-w-7xl flex-col gap-8">
         <div className="grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
-          <div className="glass-panel rounded-[2rem] p-6 sm:p-8">
+          <div className="glass-panel rounded-[1rem] p-4 sm:p-5">
             <div className="mb-8 flex flex-wrap items-start justify-between gap-5">
               <div className="max-w-2xl">
-                <span className="mb-4 inline-flex rounded-full border border-white/12 bg-white/8 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-cyan-100">Tudlist</span>
-                <h1 className="max-w-3xl font-[family:var(--font-space-grotesk)] text-4xl font-semibold tracking-tight text-white sm:text-5xl">Boards por usuario com Supabase, checklist e comentarios.</h1>
-                <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">Cada conta gerencia multiplos quadros. Cada card pode ter anexo, checklist e historico de comentarios.</p>
+                <span className="mb-4 inline-flex rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-slate-600">Organizador</span>
+                <h1 className="max-w-3xl font-[family:var(--font-space-grotesk)] text-2xl font-medium tracking-tight text-slate-900 sm:text-3xl">Organize seus quadros, tarefas, checklist e comentários em um só lugar.</h1>
+                <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-sm">Cada conta possui seus próprios quadros. Em cada card você pode adicionar anexos, checklist e comentários.</p>
               </div>
-              <div className="rounded-[1.5rem] border border-white/10 bg-slate-950/55 p-4 shadow-2xl shadow-cyan-950/30">
-                <div className="text-xs uppercase tracking-[0.3em] text-slate-400">Sessao</div>
-                <div className="mt-3 break-all text-sm font-semibold text-white">{session.user.email}</div>
-                <button type="button" onClick={() => void handleSignOut()} className="mt-4 cursor-pointer rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-100 transition hover:bg-white/10">Sair</button>
+              <div className="rounded-[1rem] border border-slate-200 bg-slate-950 p-4 text-white shadow-[0_12px_30px_rgba(15,23,42,0.12)]">
+                <div className="text-xs uppercase tracking-[0.3em] text-slate-500">Sessão</div>
+                <div className="mt-3 break-all text-xs font-medium text-slate-100">{session.user.email}</div>
+                <button type="button" onClick={() => void handleSignOut()} className="mt-4 cursor-pointer rounded-xl border border-slate-200 bg-white/10 px-2.5 py-1.5 text-[11px] font-medium text-white transition hover:bg-white/18">Sair</button>
               </div>
             </div>
             <div className="grid gap-4 md:grid-cols-3">
-              <StatCard label="Em progresso" value={String(totalDoing).padStart(2, "0")} detail="Execucao ativa" />
-              <StatCard label="Em revisao" value={String(totalReview).padStart(2, "0")} detail="Validacao pendente" />
-              <StatCard label="Concluidas" value={String(totalDone).padStart(2, "0")} detail="Fluxo fechado" />
+              <StatCard tone="blue" label="Em progresso" value={String(totalDoing).padStart(2, "0")} detail="Execucao ativa" />
+              <StatCard tone="amber" label="Em revisao" value={String(totalReview).padStart(2, "0")} detail="Validacao pendente" />
+              <StatCard tone="emerald" label="Concluidas" value={String(totalDone).padStart(2, "0")} detail="Fluxo fechado" />
             </div>
           </div>
-          <aside className="glass-panel rounded-[2rem] p-6">
-            <div className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">Menu lateral</div>
-            <h2 className="mt-3 font-[family:var(--font-space-grotesk)] text-2xl font-semibold text-white">Seus quadros</h2>
+          <aside className="glass-panel rounded-[1rem] p-4">
+            <div className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">Menu lateral</div>
+            <h2 className="mt-3 font-[family:var(--font-space-grotesk)] text-xl font-medium text-slate-900">Seus quadros</h2>
             <div className="mt-5 space-y-3">
-              <select value={selectedBoardId ?? ""} onChange={(event) => setSelectedBoardId(Number(event.target.value) || null)} className="w-full cursor-pointer rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-white outline-none">
+              <select value={selectedBoardId ?? ""} onChange={(event) => setSelectedBoardId(Number(event.target.value) || null)} className="w-full cursor-pointer rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none">
                 <option value="">Selecione um quadro</option>
                 {boards.map((board) => <option key={board.id} value={board.id}>{board.name}</option>)}
               </select>
               <form className="space-y-3" onSubmit={(event) => void handleCreateBoard(event)}>
-                <input value={boardName} onChange={(event) => setBoardName(event.target.value)} placeholder="Novo quadro" className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-white outline-none" />
-                <textarea value={boardDescription} onChange={(event) => setBoardDescription(event.target.value)} rows={3} placeholder="Descricao curta" className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-white outline-none" />
-                <button type="submit" className="w-full cursor-pointer rounded-2xl bg-linear-to-r from-cyan-300 via-sky-400 to-blue-500 px-4 py-3 text-sm font-semibold text-slate-950">Criar quadro</button>
+                <input value={boardName} onChange={(event) => setBoardName(event.target.value)} placeholder="Novo quadro" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none" />
+                <textarea value={boardDescription} onChange={(event) => setBoardDescription(event.target.value)} rows={3} placeholder="Descrição curta" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none" />
+                <button type="submit" className="w-full cursor-pointer rounded-xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(15,23,42,0.12)] hover:bg-slate-800">Criar quadro</button>
               </form>
-              <button type="button" onClick={openCreateModal} disabled={!selectedBoardId} className="w-full cursor-pointer rounded-2xl border border-white/10 bg-white/6 px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50">Criar card no modal</button>
+              <button type="button" onClick={openCreateModal} disabled={!selectedBoardId} className="w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-100 px-4 py-3 text-xs font-medium text-slate-700 disabled:cursor-not-allowed disabled:opacity-50">Criar card no modal</button>
             </div>
           </aside>
         </div>
-        {error ? <div className="rounded-2xl border border-rose-300/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">{error}</div> : null}
-        {loading ? <div className="rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-8 text-center text-sm text-slate-300">Carregando...</div> : null}
+        {error ? <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
+        {loading ? <div className="rounded-xl border border-slate-200 bg-white/80 px-4 py-8 text-center text-sm text-slate-600">Carregando...</div> : null}
         <section className="grid gap-5 xl:grid-cols-4">
           {columns.map((column) => {
             const columnTasks = tasks.filter((task) => task.column === column.id);
             const isColumnActive = dropTarget?.columnId === column.id && dropTarget.taskId === null;
             return (
-              <div key={column.id} onDragOver={(event) => handleColumnDragOver(event, column.id)} onDrop={(event) => void handleDrop(event, column.id, null)} className={`rounded-[2rem] border border-white/10 bg-linear-to-b ${column.surface} p-4 shadow-[0_28px_80px_rgba(2,8,23,0.45)] transition ${isColumnActive ? "ring-2 ring-cyan-300/40" : ""}`}> 
-                <div className="mb-4 flex items-center justify-between"><div><div className={`mb-2 h-2 w-14 rounded-full bg-linear-to-r ${column.accent}`} /><h3 className="font-[family:var(--font-space-grotesk)] text-xl font-semibold text-white">{column.title}</h3></div><span className="rounded-full border border-white/10 bg-white/6 px-3 py-1 text-xs font-semibold text-slate-300">{columnTasks.length} cards</span></div>
+              <div key={column.id} onDragOver={(event) => handleColumnDragOver(event, column.id)} onDrop={(event) => void handleDrop(event, column.id, null)} className={`rounded-[1rem] border border-slate-200 bg-linear-to-b ${column.surface} p-4 shadow-none transition ${isColumnActive ? "ring-2 ring-slate-300" : ""}`}> 
+                <div className="mb-4 flex items-center justify-between"><div><div className={`mb-2 h-2 w-14 rounded-full bg-linear-to-r ${column.accent}`} /><h3 className="font-[family:var(--font-space-grotesk)] text-sm font-medium text-slate-900">{column.title}</h3></div><span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-500">{columnTasks.length} cards</span></div>
                 <div className="min-h-24 space-y-4">
                   {columnTasks.map((task) => {
                     const doneCount = task.checklist.filter((item) => item.done).length;
@@ -623,23 +623,23 @@ export default function Home() {  const supabase = useMemo(() => getSupabaseBrow
                       {isDropTarget ? <div className="task-drop-indicator" /> : null}
                       <div className="task-card__glow" />
                       <div className="task-card__content cursor-pointer active:cursor-grabbing">
-                        <div className="flex items-start justify-between gap-3"><div><span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${priorityTone[task.priority]}`}>{task.priority}</span><h4 className="mt-3 text-lg font-semibold text-white">{task.title}</h4></div><span className="rounded-full bg-white/8 px-2.5 py-1 text-xs font-semibold text-slate-200">{task.effort}</span></div>
-                        <p className="mt-3 text-sm leading-6 text-slate-300">{task.description}</p>
-                        {task.imageUrl ? <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-slate-950/60"><Image src={task.imageUrl} alt={task.title} width={800} height={288} className="h-36 w-full object-cover" unoptimized /></div> : null}
-                        <div className="mt-4 flex flex-wrap gap-2">{task.tags.map((tag) => <span key={tag} className="rounded-full border border-white/10 bg-white/7 px-2.5 py-1 text-[11px] font-medium text-slate-200">{tag}</span>)}</div>
-                        <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-slate-400"><span>Criado {formatDateLabel(task.createdDate)}</span><span>Prazo {formatDateLabel(task.dueDate)}</span><span>Owner {task.assignee}</span><span>{doneCount}/{task.checklist.length} checklist</span></div>
-                        <div className="mt-5 flex flex-wrap gap-2"><button type="button" onClick={() => void moveTask(task.id, "left")} className="cursor-pointer rounded-xl border border-white/10 bg-black/15 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:border-white/20 hover:bg-white/10">Voltar</button><button type="button" onClick={() => void moveTask(task.id, "right")} className="cursor-pointer rounded-xl border border-cyan-300/20 bg-cyan-300/12 px-3 py-2 text-xs font-semibold text-cyan-100 transition hover:border-cyan-200/30 hover:bg-cyan-300/18">Avancar</button><button type="button" onClick={() => openEditModal(task)} className="cursor-pointer rounded-xl border border-white/10 bg-white/6 px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/10">Editar</button>{task.attachmentUrl ? <a href={task.attachmentUrl} target="_blank" rel="noreferrer" download className="cursor-pointer rounded-xl border border-white/10 bg-white/6 px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/10">Arquivo</a> : null}<button type="button" onClick={() => void handleDeleteTask(task.id)} className="cursor-pointer rounded-xl border border-rose-300/20 bg-rose-400/10 px-3 py-2 text-xs font-semibold text-rose-100 transition hover:bg-rose-400/18" aria-label={`Apagar ${task.title}`}><TrashIcon /></button></div>
+                        <div className="flex items-start justify-between gap-3"><div><span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${priorityTone[task.priority]}`}>{task.priority}</span><h4 className="mt-3 text-sm font-medium text-slate-900">{task.title}</h4></div><span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700">{task.effort}</span></div>
+                        <p className="mt-3 text-[13px] leading-5 text-slate-600">{task.description}</p>
+                        {task.imageUrl ? <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-slate-100"><Image src={task.imageUrl} alt={task.title} width={800} height={288} className="h-28 w-full object-cover" unoptimized /></div> : null}
+                        <div className="mt-3 flex flex-wrap gap-1.5">{task.tags.map((tag) => <span key={tag} className="rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-700">{tag}</span>)}</div>
+                        <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-slate-500"><span>Criado {formatDateLabel(task.createdDate)}</span><span>Prazo {formatDateLabel(task.dueDate)}</span><span>Owner {task.assignee}</span><span>{doneCount}/{task.checklist.length} checklist</span></div>
+                        <div className="mt-3 flex flex-wrap gap-1.5"><button type="button" onClick={() => void moveTask(task.id, "left")} className="cursor-pointer rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50">Voltar</button><button type="button" onClick={() => void moveTask(task.id, "right")} className="cursor-pointer rounded-xl border border-blue-300/30 bg-blue-50 px-2.5 py-1.5 text-[11px] font-medium text-blue-700 transition hover:border-blue-300 hover:bg-blue-100">Avancar</button><button type="button" onClick={() => openEditModal(task)} className="cursor-pointer rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] font-medium text-slate-700 transition hover:bg-slate-100">Editar</button>{task.attachmentUrl ? <a href={task.attachmentUrl} target="_blank" rel="noreferrer" download className="cursor-pointer rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] font-medium text-slate-700 transition hover:bg-slate-100">Arquivo</a> : null}<button type="button" onClick={() => void handleDeleteTask(task.id)} className="cursor-pointer rounded-xl border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-[11px] font-medium text-rose-700 transition hover:bg-rose-100" aria-label={`Apagar ${task.title}`}><TrashIcon /></button></div>
                       </div>
                     </article>;
                   })}
-                  {!loading && columnTasks.length === 0 ? <div className="rounded-[1.4rem] border border-dashed border-white/12 bg-black/10 px-4 py-8 text-center text-sm text-slate-400">Solte um card aqui</div> : null}
+                  {!loading && columnTasks.length === 0 ? <div className="rounded-[1.4rem] border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">Solte um card aqui</div> : null}
                 </div>
               </div>
             );
           })}
         </section>
       </section>
-      {isModalOpen ? <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4 py-8 backdrop-blur-sm"><div className="glass-panel w-full max-w-3xl rounded-[2rem] p-6 sm:p-8"><div className="flex items-start justify-between gap-4"><div><div className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">{editingTaskId === null ? "Novo card" : "Editar card"}</div><h2 className="mt-3 font-[family:var(--font-space-grotesk)] text-3xl font-semibold text-white">{editingTaskId === null ? "Criar tarefa" : "Atualizar tarefa"}</h2></div><button type="button" onClick={closeModal} className="cursor-pointer rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-slate-200 transition hover:bg-white/10">Fechar</button></div><form className="mt-6 grid gap-4 sm:grid-cols-2" onSubmit={(event) => void handleSubmit(event)}><label className="block sm:col-span-2"><span className="mb-2 block text-sm text-slate-300">Nome</span><input value={formState.title} onChange={(event) => handleInputChange("title", event.target.value)} className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-white outline-none" /></label><label className="block"><span className="mb-2 block text-sm text-slate-300">Data</span><input type="date" value={formState.createdDate} onChange={(event) => handleInputChange("createdDate", event.target.value)} className="w-full cursor-pointer rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-white outline-none" /></label><label className="block"><span className="mb-2 block text-sm text-slate-300">Prazo</span><input type="date" value={formState.dueDate} onChange={(event) => handleInputChange("dueDate", event.target.value)} className="w-full cursor-pointer rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-white outline-none" /></label><label className="block"><span className="mb-2 block text-sm text-slate-300">Prioridade</span><select value={formState.priority} onChange={(event) => handleInputChange("priority", event.target.value as Priority)} className="w-full cursor-pointer rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-white outline-none"><option value="Alta">Alta</option><option value="Media">Media</option><option value="Baixa">Baixa</option></select></label><label className="block"><span className="mb-2 block text-sm text-slate-300">Responsavel</span><input value={formState.assignee} onChange={(event) => handleInputChange("assignee", event.target.value)} className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-white outline-none" /></label><label className="block sm:col-span-2"><span className="mb-2 block text-sm text-slate-300">Arquivo ou imagem</span><input type="file" accept="image/*,.pdf,.doc,.docx,.txt" onChange={handleFileChange} className="w-full cursor-pointer rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-slate-300 outline-none file:mr-4 file:cursor-pointer file:rounded-xl file:border-0 file:bg-cyan-300/15 file:px-3 file:py-2 file:text-sm file:font-medium file:text-cyan-100" /></label>{formState.attachmentName ? <div className="sm:col-span-2 text-sm text-slate-400">Arquivo atual: {formState.attachmentName}</div> : null}{formState.imagePreview ? <div className="sm:col-span-2 overflow-hidden rounded-[1.5rem] border border-white/10 bg-slate-950/60"><Image src={formState.imagePreview} alt="Preview do arquivo" width={1200} height={520} className="h-52 w-full object-cover" unoptimized /></div> : null}<label className="block sm:col-span-2"><span className="mb-2 block text-sm text-slate-300">Detalhes</span><textarea value={formState.details} onChange={(event) => handleInputChange("details", event.target.value)} rows={4} className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-white outline-none" /></label><div className="sm:col-span-2 grid gap-4 lg:grid-cols-2"><div className="rounded-[1.5rem] border border-white/10 bg-black/20 p-4"><div className="text-sm font-semibold text-white">Checklist</div><div className="mt-3 flex gap-2"><input value={newChecklistItem} onChange={(event) => setNewChecklistItem(event.target.value)} placeholder="Novo item" className="flex-1 rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2 text-sm text-white outline-none" /><button type="button" onClick={addChecklistItem} className="cursor-pointer rounded-xl border border-white/10 bg-white/6 px-3 py-2 text-xs font-semibold text-white">Adicionar</button></div><div className="mt-3 space-y-2">{formState.checklist.map((item) => <div key={item.id} className="flex items-center gap-2 text-sm text-slate-300"><button type="button" onClick={() => toggleChecklistItem(item.id)} className={`h-5 w-5 rounded border ${item.done ? "border-emerald-300 bg-emerald-300/30" : "border-white/20"}`} /><span className={item.done ? "line-through text-slate-500" : ""}>{item.text}</span><button type="button" onClick={() => removeChecklistItem(item.id)} className="ml-auto text-xs text-rose-200">remover</button></div>)}</div></div><div className="rounded-[1.5rem] border border-white/10 bg-black/20 p-4"><div className="text-sm font-semibold text-white">Comentarios</div><div className="mt-3 flex gap-2"><input value={newComment} onChange={(event) => setNewComment(event.target.value)} placeholder="Novo comentario" className="flex-1 rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2 text-sm text-white outline-none" /><button type="button" onClick={addComment} className="cursor-pointer rounded-xl border border-white/10 bg-white/6 px-3 py-2 text-xs font-semibold text-white">Adicionar</button></div><div className="mt-3 space-y-3">{formState.comments.map((comment) => <div key={comment.id} className="rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-slate-300"><div className="flex items-center justify-between text-xs text-slate-400"><span>{comment.author}</span><span>{new Date(comment.createdAt).toLocaleDateString("pt-BR")}</span></div><p className="mt-2">{comment.text}</p><button type="button" onClick={() => removeComment(comment.id)} className="mt-2 text-xs text-rose-200">remover</button></div>)}</div></div></div><div className="sm:col-span-2 flex gap-3"><button type="submit" disabled={isSaving} className="cursor-pointer rounded-2xl bg-linear-to-r from-cyan-300 via-sky-400 to-blue-500 px-5 py-3 text-sm font-semibold text-slate-950 disabled:opacity-70">{isSaving ? "Salvando..." : editingTaskId === null ? "Salvar card" : "Atualizar card"}</button><button type="button" onClick={closeModal} className="cursor-pointer rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-slate-100">Cancelar</button></div></form></div></div> : null}
+      {isModalOpen ? <div className="fixed inset-0 z-50 flex items-center justify-center bg-white px-4 py-8 backdrop-blur-[2px]"><div className="glass-panel w-full max-w-3xl rounded-[1rem] p-4 sm:p-5"><div className="flex items-start justify-between gap-4"><div><div className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">{editingTaskId === null ? "Novo card" : "Editar card"}</div><h2 className="mt-3 font-[family:var(--font-space-grotesk)] text-xl font-medium text-slate-900">{editingTaskId === null ? "Criar tarefa" : "Atualizar tarefa"}</h2></div><button type="button" onClick={closeModal} className="cursor-pointer rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-50">Fechar</button></div><form className="mt-6 grid gap-4 sm:grid-cols-2" onSubmit={(event) => void handleSubmit(event)}><label className="block sm:col-span-2"><span className="mb-2 block text-sm text-slate-600">Nome</span><input value={formState.title} onChange={(event) => handleInputChange("title", event.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none" /></label><label className="block"><span className="mb-2 block text-sm text-slate-600">Data</span><input type="date" value={formState.createdDate} onChange={(event) => handleInputChange("createdDate", event.target.value)} className="w-full cursor-pointer rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none" /></label><label className="block"><span className="mb-2 block text-sm text-slate-600">Prazo</span><input type="date" value={formState.dueDate} onChange={(event) => handleInputChange("dueDate", event.target.value)} className="w-full cursor-pointer rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none" /></label><label className="block"><span className="mb-2 block text-sm text-slate-600">Prioridade</span><select value={formState.priority} onChange={(event) => handleInputChange("priority", event.target.value as Priority)} className="w-full cursor-pointer rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"><option value="Alta">Alta</option><option value="Media">Media</option><option value="Baixa">Baixa</option></select></label><label className="block"><span className="mb-2 block text-sm text-slate-600">Responsavel</span><input value={formState.assignee} onChange={(event) => handleInputChange("assignee", event.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none" /></label><label className="block sm:col-span-2"><span className="mb-2 block text-sm text-slate-600">Arquivo ou imagem</span><input type="file" accept="image/*,.pdf,.doc,.docx,.txt" onChange={handleFileChange} className="w-full cursor-pointer rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 outline-none file:mr-4 file:cursor-pointer file:rounded-xl file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-blue-700" /></label>{formState.attachmentName ? <div className="sm:col-span-2 text-sm text-slate-500">Arquivo atual: {formState.attachmentName}</div> : null}{formState.imagePreview ? <div className="sm:col-span-2 overflow-hidden rounded-[1.5rem] border border-slate-200 bg-slate-100"><Image src={formState.imagePreview} alt="Preview do arquivo" width={1200} height={520} className="h-52 w-full object-cover" unoptimized /></div> : null}<label className="block sm:col-span-2"><span className="mb-2 block text-sm text-slate-600">Detalhes</span><textarea value={formState.details} onChange={(event) => handleInputChange("details", event.target.value)} rows={4} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none" /></label><div className="sm:col-span-2 grid gap-4 lg:grid-cols-2"><div className="rounded-[1rem] border border-slate-200 bg-white p-3 "><div className="text-xs font-medium text-slate-700">Checklist</div><div className="mt-3 flex gap-2"><input value={newChecklistItem} onChange={(event) => setNewChecklistItem(event.target.value)} placeholder="Novo item" className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none" /><button type="button" onClick={addChecklistItem} className="cursor-pointer rounded-xl border border-slate-200 bg-slate-100 px-2.5 py-1.5 text-[11px] font-medium text-slate-700">Adicionar</button></div><div className="mt-3 space-y-2">{formState.checklist.map((item) => <div key={item.id} className="flex items-center gap-2 text-sm text-slate-600"><button type="button" onClick={() => toggleChecklistItem(item.id)} className={`h-5 w-5 rounded border ${item.done ? "border-emerald-300 bg-emerald-300/30" : "border-slate-300 bg-white"}`} /><span className={item.done ? "line-through text-slate-500" : ""}>{item.text}</span><button type="button" onClick={() => removeChecklistItem(item.id)} className="ml-auto text-xs text-rose-600">remover</button></div>)}</div></div><div className="rounded-[1rem] border border-slate-200 bg-white p-3 "><div className="text-xs font-medium text-slate-700">Comentarios</div><div className="mt-3 flex gap-2"><input value={newComment} onChange={(event) => setNewComment(event.target.value)} placeholder="Novo comentario" className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none" /><button type="button" onClick={addComment} className="cursor-pointer rounded-xl border border-slate-200 bg-slate-100 px-2.5 py-1.5 text-[11px] font-medium text-slate-700">Adicionar</button></div><div className="mt-3 space-y-3">{formState.comments.map((comment) => <div key={comment.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700"><div className="flex items-center justify-between text-xs text-slate-500"><span>{comment.author}</span><span>{new Date(comment.createdAt).toLocaleDateString("pt-BR")}</span></div><p className="mt-2">{comment.text}</p><button type="button" onClick={() => removeComment(comment.id)} className="mt-2 text-xs text-rose-600">remover</button></div>)}</div></div></div><div className="sm:col-span-2 flex gap-3"><button type="submit" disabled={isSaving} className="cursor-pointer rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(15,23,42,0.12)] hover:bg-slate-800 disabled:opacity-70">{isSaving ? "Salvando..." : editingTaskId === null ? "Salvar card" : "Atualizar card"}</button><button type="button" onClick={closeModal} className="cursor-pointer rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancelar</button></div></form></div></div> : null}
     </main>
   );
 }
@@ -702,8 +702,32 @@ function formatDateLabel(value: string) {
   return `${day}/${month}/${year}`;
 }
 
-function StatCard({ label, value, detail }: { label: string; value: string; detail: string }) {
-  return <div className="rounded-[1.6rem] border border-white/10 bg-slate-950/45 p-4"><div className="text-xs uppercase tracking-[0.24em] text-slate-400">{label}</div><div className="mt-3 font-[family:var(--font-space-grotesk)] text-4xl font-semibold text-white">{value}</div><div className="mt-2 text-sm text-slate-300">{detail}</div></div>;
+function StatCard({
+  label,
+  value,
+  detail,
+  tone = "blue",
+}: {
+  label: string;
+  value: string;
+  detail: string;
+  tone?: "blue" | "amber" | "emerald";
+}) {
+  const toneClass = {
+    blue: "from-blue-50 to-sky-50 border-blue-100",
+    amber: "from-amber-50 to-orange-50 border-amber-100",
+    emerald: "from-emerald-50 to-teal-50 border-emerald-100",
+  }[tone];
+
+  return (
+    <div className={`rounded-[1rem] border bg-linear-to-b ${toneClass} p-4`}>
+      <div className="text-[11px] uppercase tracking-[0.24em] text-slate-500">{label}</div>
+      <div className="mt-3 font-[family:var(--font-space-grotesk)] text-3xl font-medium text-slate-900">
+        {value}
+      </div>
+      <div className="mt-1 text-sm text-slate-600">{detail}</div>
+    </div>
+  );
 }
 
 function TrashIcon() {

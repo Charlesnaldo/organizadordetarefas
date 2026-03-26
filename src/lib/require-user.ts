@@ -1,19 +1,21 @@
-import { getSupabaseAdmin } from "@/lib/supabase-admin";
+﻿import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 export async function requireUserId(request: Request) {
   const authorization = request.headers.get("authorization");
   const token = authorization?.replace("Bearer ", "").trim();
 
   if (!token) {
-    throw new Error("Nao autenticado.");
+    throw new Error("Não autenticado.");
   }
 
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase.auth.getUser(token);
 
   if (error || !data.user) {
-    throw new Error("Sessao invalida.");
+    throw new Error("Sessão inválida.");
   }
 
   return data.user.id;
 }
+
+

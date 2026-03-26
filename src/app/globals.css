@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #06131f;
+  --foreground: #f4f7fb;
 }
 
 @theme inline {
@@ -10,17 +10,115 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-space-grotesk: var(--font-space-grotesk);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background:
+    radial-gradient(circle at top left, rgba(34, 211, 238, 0.12), transparent 30%),
+    radial-gradient(circle at top right, rgba(217, 70, 239, 0.14), transparent 28%),
+    linear-gradient(180deg, #07111d 0%, #020817 100%);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), sans-serif;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.06) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: linear-gradient(180deg, rgba(255, 255, 255, 0.45), transparent 85%);
+}
+
+.glass-panel {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(180deg, rgba(10, 17, 32, 0.84), rgba(9, 15, 27, 0.72)),
+    rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(22px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 30px 80px rgba(2, 8, 23, 0.45);
+}
+
+.task-card {
+  position: relative;
+  transform-style: preserve-3d;
+  perspective: 1400px;
+}
+
+.task-drop-indicator {
+  position: absolute;
+  top: -0.6rem;
+  left: 1rem;
+  right: 1rem;
+  z-index: 2;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(34, 211, 238, 0.4), rgba(59, 130, 246, 0.95));
+  box-shadow: 0 0 20px rgba(34, 211, 238, 0.35);
+}
+
+.task-card__glow {
+  position: absolute;
+  inset: 10px;
+  border-radius: 1.5rem;
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.16), rgba(236, 72, 153, 0.14));
+  filter: blur(18px);
+  opacity: 0.7;
+  transition:
+    transform 180ms ease,
+    opacity 180ms ease;
+}
+
+.task-card__content {
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1.5rem;
+  padding: 1rem;
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.88)),
+    rgba(255, 255, 255, 0.04);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 18px 35px rgba(15, 23, 42, 0.45);
+  transform: rotateX(0deg) rotateY(0deg) translateZ(0);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.task-card:hover .task-card__glow {
+  opacity: 1;
+  transform: translateY(4px) scale(1.01);
+}
+
+.task-card:hover .task-card__content {
+  border-color: rgba(125, 211, 252, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 28px 50px rgba(8, 47, 73, 0.35);
+  transform: rotateX(8deg) rotateY(-6deg) translateY(-6px);
+}
+
+.task-card:active .task-card__content {
+  cursor: grabbing;
+}
+
+::selection {
+  background: rgba(34, 211, 238, 0.3);
+  color: #f8fafc;
 }

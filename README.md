@@ -4,13 +4,13 @@ Kanban com `Next.js`, `Tailwind CSS` e `Supabase`.
 
 ## Recursos
 
-- Autenticacao com Supabase Auth
-- Multiplos boards por usuario
+- Autenticação com Supabase Auth
+- Múltiplos boards por usuário
 - Cards com drag and drop
 - Modal para criar e editar cards
 - Upload de anexos
-- Checklist e comentarios por card
-- Exclusao de card com icone de lixeira
+- Checklist e comentários por card
+- Exclusão de card com ícone de lixeira
 
 ## Stack
 
@@ -19,9 +19,9 @@ Kanban com `Next.js`, `Tailwind CSS` e `Supabase`.
 - Tailwind CSS 4
 - Supabase
 
-## Configuracao
+## Configuração
 
-1. Instale as dependencias:
+1. Instale as dependências:
 
 ```bash
 npm install
@@ -58,7 +58,7 @@ npm run build
 - `src/app/api/boards`: API de boards
 - `src/app/api/tasks`: API de tarefas
 - `src/app/api/uploads`: upload local de arquivos
-- `src/lib`: tipos, mapeadores e integracao com Supabase
+- `src/lib`: tipos, mapeadores e integração com Supabase
 - `supabase/schema.sql`: schema do banco
 
 ## Publicacao no GitHub

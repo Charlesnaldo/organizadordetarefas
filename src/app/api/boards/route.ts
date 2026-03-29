@@ -6,65 +6,75 @@ import { BoardPayload, BoardRecord } from "@/lib/task-types";
 
 export const runtime = "nodejs";
 
+// Helper para centralizar respostas de erro
+const errorResponse = (message: string, status = 500) => 
+  NextResponse.json({ error: message }, { status });
+
 export async function GET(request: Request) {
   try {
     const userId = await requireUserId(request);
     const supabase = getSupabaseAdmin();
 
-    const { data: initialData, error } = await supabase
+    const { data: boards, error } = await supabase
       .from("boards")
       .select("*")
       .eq("user_id", userId)
       .order("inserted_at", { ascending: true });
 
-    if (error) {
-      throw error;
+    if (error) throw error;
+
+    // Se existirem quadros, retorna mapeado
+    if (boards && boards.length > 0) {
+      return NextResponse.json(boards.map(mapBoardRecord));
     }
 
-    let data = initialData;
+    // Criação do quadro inicial caso não exista nenhum
+    const { data: newBoard, error: createError } = await supabase
+      .from("boards")
+      .insert({
+        user_id: userId,
+        name: "Meu Primeiro Board",
+        description: "Quadro criado automaticamente no primeiro acesso.",
+      })
+      .select("*")
+      .single();
 
-    if (!data || data.length === 0) {
-      const created = await supabase
-        .from("boards")
-        .insert({
-          user_id: userId,
-          name: "Meu Primeiro Board",
-          description: "Quadro criado automaticamente no primeiro acesso.",
-        })
-        .select("*")
-        .single();
+    if (createError) throw createError;
 
-      if (created.error) {
-        throw created.error;
-      }
-
-      data = [created.data as BoardRecord];
-    }
-
-    return NextResponse.json((data as BoardRecord[]).map(mapBoardRecord));
+    return NextResponse.json([mapBoardRecord(newBoard as BoardRecord)]);
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Falha ao carregar quadros." }, { status: 500 });
+    console.error("[BOARDS_GET]", error);
+    return errorResponse(error instanceof Error ? error.message : "Falha ao carregar quadros.");
   }
 }
 
 export async function POST(request: Request) {
   try {
     const userId = await requireUserId(request);
-    const payload = (await request.json()) as BoardPayload;
+    const body = await request.json();
+    
+    // Validação simples de payload
+    if (!body.name) {
+      return errorResponse("O nome do quadro é obrigatório.", 400);
+    }
+
+    const payload = body as BoardPayload;
     const supabase = getSupabaseAdmin();
 
     const { data, error } = await supabase
       .from("boards")
-      .insert({ ...mapBoardPayload(payload), user_id: userId })
+      .insert({ 
+        ...mapBoardPayload(payload), 
+        user_id: userId 
+      })
       .select("*")
       .single();
 
-    if (error) {
-      throw error;
-    }
+    if (error) throw error;
 
     return NextResponse.json(mapBoardRecord(data as BoardRecord), { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Falha ao criar quadro." }, { status: 500 });
+    console.error("[BOARDS_POST]", error);
+    return errorResponse(error instanceof Error ? error.message : "Falha ao criar quadro.");
   }
 }

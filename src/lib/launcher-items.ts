@@ -4,17 +4,17 @@
   eyebrow: string;
   description: string;
   accent: string;
-  icon: "target" | "calendar" | "kanban" | "study" | "finance" | "wishlist" | "lightbulb" | "bookmark" | "link" | "review";
+  icon: "target" | "calendar" | "kanban" | "study" | "finance" | "wishlist" | "lightbulb" | "bookmark" | "link" | "review" | "video";
 };
 
 export const launcherItems: LauncherItem[] = [
   {
-    href: "/objetivos",
-    title: "Objetivos",
-    eyebrow: "Horizonte",
-    description: "Declara metas recorrentes e acompanhe o progresso semanal visualmente.",
-    accent: "from-sky-200 via-blue-100 to-white",
-    icon: "target",
+    href: "/cinema",
+    title: "Cinema",
+    eyebrow: "YouTube",
+    description: "Sua coleção de vídeos favoritos. Assista diretamente do sistema com player embutido.",
+    accent: "from-rose-400 via-red-300 to-white",
+    icon: "video",
   },
   {
     href: "/planejamento-semanal",

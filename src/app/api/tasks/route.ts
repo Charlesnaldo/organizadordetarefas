@@ -25,7 +25,7 @@ export async function GET(request: Request) {
       .maybeSingle();
 
     if (!board) {
-      return NextResponse.json({ error: "Quadro nao encontrado." }, { status: 404 });
+      return NextResponse.json({ error: "Quadro não encontrado." }, { status: 404 });
     }
 
     const { data, error } = await supabase
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     if (!board) {
-      return NextResponse.json({ error: "Quadro nao encontrado." }, { status: 404 });
+      return NextResponse.json({ error: "Quadro não encontrado." }, { status: 404 });
     }
 
     const { data: lastTask } = await supabase
@@ -105,7 +105,7 @@ export async function PATCH(request: Request) {
       .maybeSingle();
 
     if (!board) {
-      return NextResponse.json({ error: "Quadro nao encontrado." }, { status: 404 });
+      return NextResponse.json({ error: "Quadro não encontrado." }, { status: 404 });
     }
 
     for (const task of body.tasks) {

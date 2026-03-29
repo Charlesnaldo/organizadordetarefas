@@ -1,31 +1,66 @@
-﻿"use client";
+"use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
+import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 type SiteItem = { id: string; title: string; url: string; category: string; notes: string };
 const emptySite = { title: "", url: "", category: "", notes: "" };
 
 export default function SitesWorkspace({ session }: { session: Session }) {
-  const storageKey = `tudlist.sites.${session.user.id}`;
-  const [sites, setSites] = useState<SiteItem[]>(() => {
-    if (typeof window === "undefined") return [];
-    const stored = window.localStorage.getItem(storageKey);
-    if (!stored) return [];
-    try { return JSON.parse(stored) as SiteItem[]; } catch { return []; }
-  });
+  const supabase = useMemo(() => getSupabaseBrowserClient(), []);
+  const [sites, setSites] = useState<SiteItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(emptySite);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(storageKey, JSON.stringify(sites));
-  }, [sites, storageKey]);
+    void loadSites();
+  }, [supabase]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function authFetch<T>(input: string, init?: RequestInit): Promise<T> {
+    if (!supabase) throw new Error("Supabase não configurado.");
+    const activeSession = session ?? (await supabase.auth.getSession()).data.session;
+    if (!activeSession?.access_token) throw new Error("Sessão expirada.");
+
+    const response = await fetch(input, {
+      ...init,
+      headers: {
+        ...(init?.headers ?? {}),
+        Authorization: `Bearer ${activeSession.access_token}`,
+      },
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error ?? "Falha na requisição.");
+    return data as T;
+  }
+
+  async function loadSites() {
+    setLoading(true);
+    try {
+      const data = await authFetch<SiteItem[]>("/api/sites");
+      setSites(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!form.title.trim() || !form.url.trim()) return;
-    setSites((current) => [{ id: crypto.randomUUID(), ...form }, ...current]);
-    setForm(emptySite);
+
+    try {
+      const newItem = await authFetch<SiteItem>("/api/sites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      setSites((current) => [newItem, ...current]);
+      setForm(emptySite);
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   return (
@@ -42,7 +77,9 @@ export default function SitesWorkspace({ session }: { session: Session }) {
         </form>
       </div>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {sites.map((site) => (
+        {loading ? (
+          <div className="col-span-full py-10 text-center text-slate-500">Buscando links...</div>
+        ) : sites.map((site) => (
           <article key={site.id} className="glass-panel rounded-[1.2rem] p-4">
             <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">{site.category || "Sem categoria"}</div>
             <h3 className="mt-3 font-[family:var(--font-space-grotesk)] text-lg font-medium text-slate-900">{site.title}</h3>
@@ -50,10 +87,8 @@ export default function SitesWorkspace({ session }: { session: Session }) {
             <a href={site.url} target="_blank" rel="noreferrer" className="mt-4 inline-flex rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-700">Abrir link</a>
           </article>
         ))}
-        {sites.length === 0 ? <div className="glass-panel rounded-[1.2rem] p-6 text-sm text-slate-500 md:col-span-2 xl:col-span-3">Nenhum site salvo ainda.</div> : null}
+        {!loading && sites.length === 0 ? <div className="glass-panel rounded-[1.2rem] p-6 text-sm text-slate-500 md:col-span-2 xl:col-span-3">Nenhum site salvo ainda.</div> : null}
       </div>
     </section>
   );
 }
-
-

@@ -1,72 +1,104 @@
-﻿"use client";
+"use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
+import { toast } from "sonner";
+import { 
+  PlusCircle, 
+  ArrowUpCircle, 
+  ArrowDownCircle, 
+  Target, 
+  TrendingUp, 
+  Wallet, 
+  Trash2, 
+  Calendar,
+  AlertCircle,
+  BarChart3
+} from "lucide-react";
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer, 
+  Cell,
+  Legend
+} from "recharts";
+import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 type FinanceCategory = "entrada" | "saida-fixa" | "saida-variavel" | "investimento" | "meta";
 
 type FinanceEntry = {
   id: string;
   title: string;
-  amount: string;
+  amount: number;
   category: FinanceCategory;
   notes: string;
-  dueDate: string;
+  due_date: string;
+  inserted_at: string;
 };
 
-const emptyForm = {
-  title: "",
-  amount: "",
-  category: "entrada" as FinanceCategory,
-  notes: "",
-  dueDate: "",
-};
-
-const categoryMeta: Record<FinanceCategory, { label: string; tone: string }> = {
-  entrada: { label: "Entradas", tone: "from-emerald-50 to-teal-50 border-emerald-100" },
-  "saida-fixa": { label: "Saídas Fixas", tone: "from-rose-50 to-orange-50 border-rose-100" },
-  "saida-variavel": { label: "Saídas Variáveis", tone: "from-amber-50 to-yellow-50 border-amber-100" },
-  investimento: { label: "Investimentos", tone: "from-sky-50 to-cyan-50 border-sky-100" },
-  meta: { label: "Metas Financeiras", tone: "from-violet-50 to-fuchsia-50 border-violet-100" },
+const categoryMeta: Record<FinanceCategory, { label: string; tone: string; icon: any; color: string }> = {
+  entrada: { label: "Entradas", tone: "from-emerald-50 to-teal-50 border-emerald-100", icon: ArrowUpCircle, color: "text-emerald-600" },
+  "saida-fixa": { label: "Saídas Fixas", tone: "from-rose-50 to-orange-50 border-rose-100", icon: ArrowDownCircle, color: "text-rose-600" },
+  "saida-variavel": { label: "Saídas Variáveis", tone: "from-amber-50 to-yellow-50 border-amber-100", icon: AlertCircle, color: "text-amber-600" },
+  investimento: { label: "Investimentos", tone: "from-sky-50 to-cyan-50 border-sky-100", icon: TrendingUp, color: "text-sky-600" },
+  meta: { label: "Metas Financeiras", tone: "from-violet-50 to-fuchsia-50 border-violet-100", icon: Target, color: "text-violet-600" },
 };
 
 export default function FinanceWorkspace({ session }: { session: Session }) {
-  const storageKey = `tudlist.finance.${session.user.id}`;
-  const [entries, setEntries] = useState<FinanceEntry[]>(() => {
-    if (typeof window === "undefined") {
-      return [];
-    }
-    const stored = window.localStorage.getItem(storageKey);
-    if (!stored) {
-      return [];
-    }
-    try {
-      return JSON.parse(stored) as FinanceEntry[];
-    } catch {
-      return [];
-    }
+  const supabase = useMemo(() => getSupabaseBrowserClient(), []);
+  const [entries, setEntries] = useState<FinanceEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [form, setForm] = useState({
+    title: "",
+    amount: "",
+    category: "entrada" as FinanceCategory,
+    notes: "",
+    dueDate: "",
   });
-  const [form, setForm] = useState(emptyForm);
 
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
+    void loadEntries();
+  }, [supabase]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function authFetch<T>(input: string, init?: RequestInit): Promise<T> {
+    if (!supabase) throw new Error("Supabase não configurado.");
+    const activeSession = session ?? (await supabase.auth.getSession()).data.session;
+    if (!activeSession?.access_token) throw new Error("Sessão expirada.");
+
+    const response = await fetch(input, {
+      ...init,
+      headers: {
+        ...(init?.headers ?? {}),
+        Authorization: `Bearer ${activeSession.access_token}`,
+      },
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error ?? "Falha na requisição.");
+    return data as T;
+  }
+
+  async function loadEntries() {
+    setLoading(true);
+    try {
+      const data = await authFetch<FinanceEntry[]>("/api/finance");
+      setEntries(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-    window.localStorage.setItem(storageKey, JSON.stringify(entries));
-  }, [entries, storageKey]);
+  }
 
   const summary = useMemo(() => {
-    const totals = {
-      entrada: 0,
-      "saida-fixa": 0,
-      "saida-variavel": 0,
-      investimento: 0,
-      meta: 0,
-    } satisfies Record<FinanceCategory, number>;
-
-    for (const entry of entries) {
-      totals[entry.category] += parseCurrencyInput(entry.amount);
-    }
+    const totals = entries.reduce((acc, entry) => {
+      acc[entry.category] += Number(entry.amount);
+      return acc;
+    }, { entrada: 0, "saida-fixa": 0, "saida-variavel": 0, investimento: 0, meta: 0 });
 
     const totalSaidas = totals["saida-fixa"] + totals["saida-variavel"];
     const saldo = totals.entrada - totalSaidas - totals.investimento;
@@ -74,123 +106,307 @@ export default function FinanceWorkspace({ session }: { session: Session }) {
     return { totals, totalSaidas, saldo };
   }, [entries]);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!form.title.trim() || !form.amount.trim()) {
-      return;
+  // Processamento de dados para o gráfico
+  const chartData = useMemo(() => {
+    const months: Record<string, { month: string; entradas: number; saidas: number }> = {};
+    const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
+    // Pegar os últimos 6 meses
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${d.getMonth()}`;
+      months[key] = { month: `${monthNames[d.getMonth()]}`, entradas: 0, saidas: 0 };
     }
 
-    setEntries((current) => [
-      {
-        id: crypto.randomUUID(),
-        title: form.title.trim(),
-        amount: form.amount.trim(),
-        category: form.category,
-        notes: form.notes.trim(),
-        dueDate: form.dueDate,
-      },
-      ...current,
-    ]);
-    setForm(emptyForm);
+    entries.forEach(entry => {
+      const date = new Date(entry.due_date || entry.inserted_at);
+      const key = `${date.getFullYear()}-${date.getMonth()}`;
+      if (months[key]) {
+        if (entry.category === "entrada") {
+          months[key].entradas += Number(entry.amount);
+        } else if (entry.category === "saida-fixa" || entry.category === "saida-variavel") {
+          months[key].saidas += Number(entry.amount);
+        }
+      }
+    });
+
+    return Object.values(months);
+  }, [entries]);
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    const numericAmount = parseCurrencyInput(form.amount);
+    if (!form.title.trim() || numericAmount <= 0) return;
+
+    try {
+      const newEntry = await authFetch<FinanceEntry>("/api/finance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: form.title.trim(),
+          amount: numericAmount,
+          category: form.category,
+          notes: form.notes.trim(),
+          due_date: form.dueDate || null,
+        }),
+      });
+
+      setEntries([newEntry, ...entries]);
+      setForm({ title: "", amount: "", category: "entrada", notes: "", dueDate: "" });
+      toast.success("Lançamento adicionado com sucesso!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Falha ao salvar lançamento.");
+    }
   }
 
-  function removeEntry(id: string) {
-    setEntries((current) => current.filter((entry) => entry.id !== id));
+  async function handleDelete(id: string) {
+    if (!window.confirm("Excluir este lançamento?")) return;
+
+    try {
+      await authFetch(`/api/finance?id=${id}`, { method: "DELETE" });
+      setEntries(entries.filter((e) => e.id !== id));
+      toast.success("Lançamento removido.");
+    } catch (err) {
+      console.error(err);
+      toast.error("Falha ao remover lançamento.");
+    }
   }
 
   return (
-    <section className="grid gap-5 xl:grid-cols-[0.75fr_1.25fr]">
-      <div className="glass-panel rounded-[1.4rem] p-4 sm:p-5">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500">Planejamento</div>
-        <h2 className="mt-3 font-[family:var(--font-space-grotesk)] text-2xl font-medium text-slate-900">Controle financeiro</h2>
-        <p className="mt-3 text-sm leading-7 text-slate-600">Registre salário, renda extra, despesas fixas, gastos variáveis, investimentos e metas em um só painel.</p>
-        <form className="mt-5 space-y-3" onSubmit={handleSubmit}>
-          <input value={form.title} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} placeholder="Título do lançamento" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none" />
-          <div className="grid gap-3 sm:grid-cols-2">
-            <input value={form.amount} onChange={(event) => setForm((current) => ({ ...current, amount: event.target.value }))} placeholder="Valor" inputMode="decimal" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none" />
-            <select value={form.category} onChange={(event) => setForm((current) => ({ ...current, category: event.target.value as FinanceCategory }))} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none">
-              <option value="entrada">Entradas</option>
-              <option value="saida-fixa">Saídas Fixas</option>
-              <option value="saida-variavel">Saídas Variáveis</option>
-              <option value="investimento">Investimentos</option>
-              <option value="meta">Metas Financeiras</option>
-            </select>
-          </div>
-          <input type="date" value={form.dueDate} onChange={(event) => setForm((current) => ({ ...current, dueDate: event.target.value }))} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none" />
-          <textarea value={form.notes} onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))} rows={4} placeholder="Observações" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none" />
-          <button type="submit" className="w-full cursor-pointer rounded-xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white">Salvar lançamento</button>
-        </form>
-      </div>
+    <section className="grid gap-6 xl:grid-cols-[400px_1fr]">
+      <aside className="space-y-6">
+        {/* Formulário */}
+        <div className="glass-panel rounded-[2.5rem] border border-white/40 bg-white p-8 shadow-sm">
+          <header className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
+              <PlusCircle className="h-6 w-6" />
+            </div>
+            <div>
+              <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Gestão de Capital</div>
+              <h2 className="text-2xl font-bold text-slate-900">Novo Registro</h2>
+            </div>
+          </header>
 
-      <div className="space-y-5">
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <FinanceStatCard label="Entradas" value={formatCurrency(summary.totals.entrada)} tone="from-emerald-50 to-teal-50 border-emerald-100" />
-          <FinanceStatCard label="Saídas" value={formatCurrency(summary.totalSaidas)} tone="from-rose-50 to-orange-50 border-rose-100" />
-          <FinanceStatCard label="Investimentos" value={formatCurrency(summary.totals.investimento)} tone="from-sky-50 to-cyan-50 border-sky-100" />
-          <FinanceStatCard label="Saldo Livre" value={formatCurrency(summary.saldo)} tone="from-slate-50 to-white border-slate-200" />
+          <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
+            <div>
+              <label className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-500 ml-1">Descrição</label>
+              <input 
+                required
+                value={form.title} 
+                onChange={e => setForm({...form, title: e.target.value})}
+                placeholder="Ex: Salário Mensal" 
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm transition-all focus:border-slate-950 focus:bg-white outline-none" 
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-500 ml-1">Valor (R$)</label>
+                <input 
+                  required
+                  value={form.amount}
+                  onChange={e => setForm({...form, amount: e.target.value})}
+                  placeholder="0,00"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm focus:border-slate-950 focus:bg-white outline-none"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-500 ml-1">Categoria</label>
+                <select 
+                  value={form.category} 
+                  onChange={e => setForm({...form, category: e.target.value as FinanceCategory})}
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm focus:border-slate-950 focus:bg-white outline-none appearance-none"
+                >
+                  {Object.entries(categoryMeta).map(([key, meta]) => (
+                    <option key={key} value={key}>{meta.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3">
+               <div>
+                <label className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-500 ml-1">Data</label>
+                <div className="relative">
+                  <Calendar className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input 
+                    type="date" 
+                    value={form.dueDate}
+                    onChange={e => setForm({...form, dueDate: e.target.value})}
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 py-3 pl-11 pr-4 text-sm focus:border-slate-950 focus:bg-white outline-none" 
+                  />
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 py-4 text-sm font-bold text-white transition-all hover:bg-black active:scale-[0.98] shadow-lg shadow-black/10">
+              <PlusCircle className="h-4 w-4 transition-transform group-hover:rotate-90" />
+              Adicionar Lançamento
+            </button>
+          </form>
+        </div>
+      </aside>
+
+      <main className="space-y-6">
+        {/* Gráfico Mensal */}
+        <div className="glass-panel rounded-[2.5rem] border border-white/40 bg-white p-8 shadow-sm">
+          <header className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600">
+                <BarChart3 className="h-6 w-6" />
+              </div>
+              <div>
+                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Visão Analítica</div>
+                <h2 className="text-xl font-bold text-slate-900">Performance Mensal</h2>
+              </div>
+            </div>
+            <div className="flex gap-4">
+              <div className="flex items-center gap-2">
+                <div className="h-3 w-3 rounded-full bg-emerald-500" />
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Entradas</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-3 w-3 rounded-full bg-rose-500" />
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Saídas</span>
+              </div>
+            </div>
+          </header>
+
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis 
+                  dataKey="month" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 600 }} 
+                  dy={10}
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fill: '#94a3b8', fontSize: 10 }}
+                  tickFormatter={(value) => `R$ ${value}`}
+                />
+                <Tooltip 
+                  cursor={{ fill: '#f8fafc' }}
+                  contentStyle={{ 
+                    borderRadius: '1.5rem', 
+                    border: 'none', 
+                    boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+                    padding: '1rem'
+                  }}
+                  formatter={(value: number) => [formatCurrency(value), '']}
+                />
+                <Bar dataKey="entradas" fill="#10b981" radius={[6, 6, 0, 0]} barSize={24} />
+                <Bar dataKey="saidas" fill="#f43f5e" radius={[6, 6, 0, 0]} barSize={24} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
-        <div className="grid gap-4 xl:grid-cols-2">
-          {(Object.keys(categoryMeta) as FinanceCategory[]).map((category) => {
-            const items = entries.filter((entry) => entry.category === category);
+        {/* Cards de Resumo */}
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <StatCard label="Total Entradas" value={summary.totals.entrada} icon={ArrowUpCircle} color="text-emerald-600" />
+          <StatCard label="Total Saídas" value={summary.totalSaidas} icon={ArrowDownCircle} color="text-rose-600" />
+          <StatCard label="Investido" value={summary.totals.investimento} icon={TrendingUp} color="text-sky-600" />
+          <StatCard label="Saldo Atual" value={summary.saldo} icon={Wallet} color={summary.saldo >= 0 ? "text-slate-900" : "text-rose-600"} highlight />
+        </div>
+
+        {/* Categorias */}
+        <div className="grid gap-6 md:grid-cols-2">
+          {(Object.keys(categoryMeta) as FinanceCategory[]).map((catKey) => {
+            const meta = categoryMeta[catKey];
+            const items = entries.filter(e => e.category === catKey);
+            const Icon = meta.icon;
+
             return (
-              <section key={category} className={`rounded-[1.2rem] border bg-linear-to-b p-4 ${categoryMeta[category].tone}`}>
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">{categoryMeta[category].label}</div>
-                    <div className="mt-2 text-xl font-medium text-slate-900">{formatCurrency(summary.totals[category])}</div>
+              <div key={catKey} className={`flex flex-col rounded-[2.5rem] border bg-gradient-to-br p-6 ${meta.tone} shadow-sm transition-all hover:shadow-md`}>
+                <header className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className={`rounded-2xl bg-white p-2.5 shadow-sm ${meta.color}`}>
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">{meta.label}</h3>
                   </div>
-                  <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-500">{items.length} itens</span>
-                </div>
-                <div className="mt-4 space-y-3">
-                  {items.map((entry) => (
-                    <article key={entry.id} className="rounded-[1rem] border border-slate-200 bg-white/90 p-3 shadow-[0_10px_20px_rgba(15,23,42,0.04)]">
-                      <div className="flex items-start justify-between gap-3">
+                  <span className="text-lg font-bold text-slate-900">{formatCurrency(summary.totals[catKey])}</span>
+                </header>
+
+                <div className="flex-1 space-y-3">
+                  {items.map(entry => (
+                    <div key={entry.id} className="group relative rounded-2xl border border-white/50 bg-white/60 p-4 transition-all hover:bg-white hover:shadow-md backdrop-blur-sm">
+                      <div className="flex justify-between">
                         <div>
-                          <div className="text-sm font-medium text-slate-900">{entry.title}</div>
-                          {entry.dueDate ? <div className="mt-1 text-xs text-slate-500">{formatDateLabel(entry.dueDate)}</div> : null}
+                          <h4 className="text-sm font-bold text-slate-900">{entry.title}</h4>
+                          {(entry.due_date || entry.inserted_at) && (
+                            <div className="mt-1 flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase">
+                              <Calendar className="h-3 w-3" />
+                              {formatDateLabel(entry.due_date || entry.inserted_at)}
+                            </div>
+                          )}
                         </div>
-                        <div className="text-sm font-semibold text-slate-900">{formatCurrency(parseCurrencyInput(entry.amount))}</div>
+                        <span className="text-sm font-black text-slate-900">{formatCurrency(entry.amount)}</span>
                       </div>
-                      {entry.notes ? <p className="mt-2 text-sm leading-6 text-slate-600">{entry.notes}</p> : null}
-                      <button type="button" onClick={() => removeEntry(entry.id)} className="mt-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-rose-600">Remover</button>
-                    </article>
+                      
+                      {entry.notes && <p className="mt-2 text-[11px] italic text-slate-500 line-clamp-2 leading-relaxed">"{entry.notes}"</p>}
+                      
+                      <button 
+                        onClick={() => void handleDelete(entry.id)}
+                        className="absolute -right-2 -top-2 hidden rounded-full bg-slate-900 p-1.5 text-white shadow-lg group-hover:block transition-all hover:bg-rose-600 scale-90"
+                        aria-label="Excluir lançamento"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   ))}
-                  {items.length === 0 ? <div className="rounded-[1rem] border border-dashed border-slate-200 bg-white/70 px-4 py-6 text-center text-sm text-slate-400">Nenhum item nessa seção.</div> : null}
+
+                  {items.length === 0 && (
+                    <div className="flex h-24 items-center justify-center rounded-2xl border-2 border-dashed border-slate-200/50 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                      {loading ? "Sincronizando..." : `Vazio`}
+                    </div>
+                  )}
                 </div>
-              </section>
+              </div>
             );
           })}
         </div>
-      </div>
+      </main>
     </section>
   );
 }
 
-function parseCurrencyInput(value: string) {
-  const normalized = value.replace(/\./g, "").replace(",", ".").replace(/[^\d.-]/g, "");
-  const parsed = Number(normalized);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 2 }).format(value);
-}
-
-function formatDateLabel(value: string) {
-  const [year, month, day] = value.split("-");
-  if (!year || !month || !day) {
-    return value;
-  }
-  return `${day}/${month}/${year}`;
-}
-
-function FinanceStatCard({ label, value, tone }: { label: string; value: string; tone: string }) {
+function StatCard({ label, value, icon: Icon, color, highlight = false }: any) {
   return (
-    <div className={`rounded-[1rem] border bg-linear-to-b ${tone} p-4`}>
-      <div className="text-[11px] uppercase tracking-[0.24em] text-slate-500">{label}</div>
-      <div className="mt-3 font-[family:var(--font-space-grotesk)] text-2xl font-medium text-slate-900">{value}</div>
+    <div className={`rounded-[2rem] border border-white/40 bg-white p-6 shadow-sm transition-all hover:shadow-md ${highlight ? 'ring-2 ring-slate-900 ring-offset-4' : ''}`}>
+      <div className="flex items-center justify-between">
+        <div className={`rounded-xl bg-slate-50 p-2 ${color}`}>
+          <Icon className="h-5 w-5" />
+        </div>
+        <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">{label}</span>
+      </div>
+      <div className={`mt-4 text-xl font-black tracking-tight ${color}`}>{formatCurrency(value)}</div>
     </div>
   );
 }
 
+function parseCurrencyInput(value: string | number): number {
+  if (typeof value === 'number') return value;
+  const cleanValue = value.replace(/\D/g, "");
+  return Number(cleanValue) / 100;
+}
+
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat("pt-BR", { 
+    style: "currency", 
+    currency: "BRL" 
+  }).format(value);
+}
+
+function formatDateLabel(value: string) {
+  if (!value) return "";
+  const date = new Date(value.includes('T') ? value : value + "T00:00:00");
+  return date.toLocaleDateString("pt-BR");
+}

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { ChangeEvent, DragEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
+import { toast } from "sonner";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { Board, BoardPayload, ChecklistItem, ColumnId, CommentItem, Priority, Task, TaskPayload } from "@/lib/task-types";
 
@@ -266,6 +267,7 @@ export default function RotinaWorkspace({ session }: { session: Session }) {
         const nextTasks = [{ ...createdTask, position: 0 }, ...tasks].map((task, index) => ({ ...task, position: index }));
         setTasks(nextTasks);
         await persistBoardOrder(nextTasks, selectedBoardId, authFetch);
+        toast.success("Tarefa criada!");
       } else {
         const updatedTask = await authFetch<Task>(`/api/tasks/${editingTaskId}`, {
           method: "PATCH",
@@ -273,6 +275,7 @@ export default function RotinaWorkspace({ session }: { session: Session }) {
           body: JSON.stringify(payload),
         });
         setTasks((current) => current.map((task) => task.id === editingTaskId ? updatedTask : task));
+        toast.success("Tarefa atualizada!");
       }
 
       closeModal();
@@ -280,6 +283,7 @@ export default function RotinaWorkspace({ session }: { session: Session }) {
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Falha ao salvar tarefa.");
       setIsSaving(false);
+      toast.error("Erro ao salvar tarefa.");
     }
   }
 
@@ -297,9 +301,11 @@ export default function RotinaWorkspace({ session }: { session: Session }) {
       if (selectedBoardId) {
         await persistBoardOrder(nextTasks, selectedBoardId, authFetch);
       }
+      toast.success("Tarefa removida.");
     } catch (deleteError) {
       setTasks(previousTasks);
       setError(deleteError instanceof Error ? deleteError.message : "Falha ao apagar tarefa.");
+      toast.error("Erro ao remover tarefa.");
     }
   }
 
@@ -416,15 +422,20 @@ export default function RotinaWorkspace({ session }: { session: Session }) {
                         {task.imageUrl ? <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-slate-100"><Image src={task.imageUrl} alt={task.title} width={800} height={288} className="h-28 w-full object-cover" unoptimized /></div> : null}
                         <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-slate-500"><span>Criado {formatDateLabel(task.createdDate)}</span><span>Prazo {formatDateLabel(task.dueDate)}</span><span>Owner {task.assignee}</span><span>{doneCount}/{task.checklist.length} checklist</span></div>
                         <div className="mt-3 flex flex-wrap gap-1.5">
-                          <button type="button" onClick={() => openEditModal(task)} className="cursor-pointer rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] font-medium text-slate-700">Editar</button>
-                          {task.attachmentUrl ? <a href={task.attachmentUrl} target="_blank" rel="noreferrer" className="cursor-pointer rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] font-medium text-slate-700">Arquivo</a> : null}
-                          <button type="button" onClick={() => void handleDeleteTask(task.id)} className="cursor-pointer rounded-xl border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-[11px] font-medium text-rose-700">Apagar</button>
+                          <button type="button" onClick={() => openEditModal(task)} className="cursor-pointer rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] font-medium text-slate-700" aria-label={`Editar tarefa: ${task.title}`}>Editar</button>
+                          {task.attachmentUrl ? <a href={task.attachmentUrl} target="_blank" rel="noreferrer" className="cursor-pointer rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] font-medium text-slate-700" aria-label={`Ver anexo da tarefa: ${task.title}`}>Arquivo</a> : null}
+                          <button type="button" onClick={() => void handleDeleteTask(task.id)} className="cursor-pointer rounded-xl border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-[11px] font-medium text-rose-700" aria-label={`Apagar tarefa: ${task.title}`}>Apagar</button>
                         </div>
                       </div>
                     </article>
                   );
                 })}
-                {!loading && columnTasks.length === 0 ? <div className="rounded-[1.4rem] border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">Solte um card aqui</div> : null}
+                {!loading && columnTasks.length === 0 ? (
+                  <div className="rounded-[1.4rem] border border-dashed border-slate-200 bg-slate-50/50 px-4 py-10 text-center">
+                    <p className="text-xs font-medium text-slate-400">Nenhuma tarefa aqui.</p>
+                    <p className="mt-1 text-[11px] text-slate-300 italic">Arraste um card ou crie um novo.</p>
+                  </div>
+                ) : null}
               </div>
             </div>
           );

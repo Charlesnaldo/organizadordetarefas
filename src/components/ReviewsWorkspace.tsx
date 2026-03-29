@@ -1,38 +1,78 @@
-﻿"use client";
+"use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
+import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 
-type ReviewItem = { id: string; resource: string; subject: string; cadence: string; last: string };
+type ReviewItem = { id: string; resource: string; subject: string; cadence: string; last_review: string };
 
 const emptyReview = { resource: "", subject: "", cadence: "Semanal" };
 
 export default function ReviewsWorkspace({ session }: { session: Session }) {
-  const storageKey = `tudlist.reviews.${session.user.id}`;
-  const [items, setItems] = useState<ReviewItem[]>(() => {
-    if (typeof window === "undefined") return [];
-    const stored = window.localStorage.getItem(storageKey);
-    if (!stored) return [];
-    try { return JSON.parse(stored) as ReviewItem[]; } catch { return []; }
-  });
+  const supabase = useMemo(() => getSupabaseBrowserClient(), []);
+  const [items, setItems] = useState<ReviewItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(emptyReview);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(storageKey, JSON.stringify(items));
-  }, [items, storageKey]);
+    void loadReviews();
+  }, [supabase]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const nextReview = useMemo(() => {
+  async function authFetch<T>(input: string, init?: RequestInit): Promise<T> {
+    if (!supabase) throw new Error("Supabase não configurado.");
+    const activeSession = session ?? (await supabase.auth.getSession()).data.session;
+    if (!activeSession?.access_token) throw new Error("Sessão expirada.");
+
+    const response = await fetch(input, {
+      ...init,
+      headers: {
+        ...(init?.headers ?? {}),
+        Authorization: `Bearer ${activeSession.access_token}`,
+      },
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error ?? "Falha na requisição.");
+    return data as T;
+  }
+
+  async function loadReviews() {
+    setLoading(true);
+    try {
+      const data = await authFetch<ReviewItem[]>("/api/reviews");
+      setItems(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const nextReviewDate = useMemo(() => {
     if (!items.length) return "Ainda não há revisões";
-    return items[0].last;
+    return items[0].last_review ? formatDateLabel(items[0].last_review) : "Pendente";
   }, [items]);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!form.resource.trim()) return;
     const nextDate = new Date().toISOString().slice(0, 10);
-    setItems((current) => [{ id: crypto.randomUUID(), resource: form.resource.trim(), subject: form.subject.trim() || "Geral", cadence: form.cadence, last: nextDate }, ...current]);
-    setForm(emptyReview);
+    
+    try {
+      const newItem = await authFetch<ReviewItem>("/api/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          resource: form.resource.trim(), 
+          subject: form.subject.trim() || "Geral", 
+          cadence: form.cadence, 
+          last_review: nextDate 
+        }),
+      });
+      setItems((current) => [newItem, ...current]);
+      setForm(emptyReview);
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   return (
@@ -43,12 +83,12 @@ export default function ReviewsWorkspace({ session }: { session: Session }) {
         <p className="mt-2 text-sm text-slate-600">Defina o ritmo e mantenha o conteúdo que precisa ser revisitado com frequência.</p>
         <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
           <div className="text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-400">Próxima revisão</div>
-          <div className="mt-2 text-lg font-semibold text-slate-900">{nextReview}</div>
+          <div className="mt-2 text-lg font-semibold text-slate-900">{nextReviewDate}</div>
         </div>
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           <label className="space-y-2 text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
             Material
-            <input value={form.resource} onChange={(event) => setForm((current) => ({ ...current, resource: event.target.value }))} placeholder="Apaixonado pelo que revisitar" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none" />
+            <input value={form.resource} onChange={(event) => setForm((current) => ({ ...current, resource: event.target.value }))} placeholder="O que revisitar" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none" />
           </label>
           <label className="space-y-2 text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
             Matéria
@@ -66,11 +106,13 @@ export default function ReviewsWorkspace({ session }: { session: Session }) {
         </form>
       </div>
       <div className="space-y-4">
-        {items.length ? items.map((item) => (
+        {loading ? (
+          <div className="py-20 text-center text-slate-500">Carregando rotinas...</div>
+        ) : items.length ? items.map((item) => (
           <div key={item.id} className="rounded-[1.3rem] border border-slate-200 bg-white/90 p-4">
             <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-slate-400">
               <span>{item.cadence}</span>
-              <span>{item.last}</span>
+              <span>Última: {item.last_review ? formatDateLabel(item.last_review) : "Nunca"}</span>
             </div>
             <h3 className="mt-3 text-lg font-semibold text-slate-900">{item.resource}</h3>
             <p className="mt-1 text-sm text-slate-500">{item.subject}</p>
@@ -83,4 +125,9 @@ export default function ReviewsWorkspace({ session }: { session: Session }) {
   );
 }
 
-
+function formatDateLabel(value: string) {
+  if (!value) return "";
+  const [year, month, day] = value.split("-");
+  if (!year || !month || !day) return value;
+  return `${day}/${month}/${year}`;
+}

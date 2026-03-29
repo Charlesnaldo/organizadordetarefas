@@ -29,6 +29,111 @@ create table if not exists public.tasks (
   updated_at timestamptz not null default now()
 );
 
+-- Tabelas com UUIDs gerados via uuid_generate_v4()
+
+create table if not exists public.wishlist (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  title text not null default '',
+  target_value numeric not null default 0,
+  current_value numeric not null default 0,
+  image_url text,
+  position integer not null default 0,
+  inserted_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.finance_entries (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  title text not null,
+  amount numeric not null default 0,
+  category text not null,
+  notes text not null default '',
+  due_date date,
+  inserted_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- Tabela objectives removida
+
+create table if not exists public.weekly_plan (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  day text not null,
+  task text not null,
+  energy text not null,
+  completed boolean not null default false,
+  inserted_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.study_items (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  title text not null,
+  subject text not null,
+  deadline date,
+  notes text not null default '',
+  content text not null default '',
+  attachment_name text,
+  attachment_url text,
+  status text not null,
+  inserted_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.ideas (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  title text not null,
+  category text not null default 'Geral',
+  inserted_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.sites (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  title text not null,
+  url text not null,
+  category text not null default 'Geral',
+  notes text not null default '',
+  inserted_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.reviews (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  resource text not null,
+  subject text not null default 'Geral',
+  cadence text not null default 'Semanal',
+  last_review date,
+  inserted_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.youtube_videos (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  title text not null,
+  url text not null,
+  category text not null default 'Geral',
+  inserted_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.user_profiles (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  avatar_url text,
+  theme_index integer not null default 0,
+  launcher_order text[] default '{}',
+  updated_at timestamptz not null default now()
+);
+
+-- Funcoes e Triggers
+
 create or replace function public.handle_updated_at()
 returns trigger
 language plpgsql
@@ -39,57 +144,64 @@ begin
 end;
 $$;
 
-drop trigger if exists boards_set_updated_at on public.boards;
-create trigger boards_set_updated_at
-before update on public.boards
-for each row
-execute function public.handle_updated_at();
+-- Triggers de Updated At
+do $$
+declare
+  t text;
+begin
+  for t in select table_name from information_schema.tables where table_schema = 'public' and table_type = 'BASE TABLE' loop
+    execute format('drop trigger if exists %I_set_updated_at on public.%I', t, t);
+    execute format('create trigger %I_set_updated_at before update on public.%I for each row execute function public.handle_updated_at()', t, t);
+  end loop;
+end;
+$$;
 
-drop trigger if exists tasks_set_updated_at on public.tasks;
-create trigger tasks_set_updated_at
-before update on public.tasks
-for each row
-execute function public.handle_updated_at();
+-- RLS (Row Level Security)
 
 alter table public.boards enable row level security;
 alter table public.tasks enable row level security;
+alter table public.wishlist enable row level security;
+alter table public.finance_entries enable row level security;
+-- Removed: alter table public.objectives enable row level security;
+alter table public.weekly_plan enable row level security;
+alter table public.study_items enable row level security;
+alter table public.ideas enable row level security;
+alter table public.sites enable row level security;
+alter table public.reviews enable row level security;
+alter table public.user_profiles enable row level security;
 
-drop policy if exists boards_select_own on public.boards;
-create policy boards_select_own on public.boards
-for select using (auth.uid() = user_id);
+-- Politicas Genericas (User ID match)
 
-drop policy if exists boards_insert_own on public.boards;
-create policy boards_insert_own on public.boards
-for insert with check (auth.uid() = user_id);
+do $$
+declare
+  t text;
+begin
+  for t in select table_name from information_schema.tables where table_schema = 'public' and table_name not in ('tasks') loop
+    execute format('drop policy if exists %I_select_own on public.%I', t, t);
+    execute format('create policy %I_select_own on public.%I for select using (auth.uid() = user_id)', t, t);
+    
+    execute format('drop policy if exists %I_insert_own on public.%I', t, t);
+    execute format('create policy %I_insert_own on public.%I for insert with check (auth.uid() = user_id)', t, t);
+    
+    execute format('drop policy if exists %I_update_own on public.%I', t, t);
+    execute format('create policy %I_update_own on public.%I for update using (auth.uid() = user_id)', t, t);
+    
+    execute format('drop policy if exists %I_delete_own on public.%I', t, t);
+    execute format('create policy %I_delete_own on public.%I for delete using (auth.uid() = user_id)', t, t);
+  end loop;
+end;
+$$;
 
-drop policy if exists boards_update_own on public.boards;
-create policy boards_update_own on public.boards
-for update using (auth.uid() = user_id);
-
-drop policy if exists boards_delete_own on public.boards;
-create policy boards_delete_own on public.boards
-for delete using (auth.uid() = user_id);
+-- Politicas Especiais para Tasks (baseadas no board)
 
 drop policy if exists tasks_select_own on public.tasks;
-create policy tasks_select_own on public.tasks
-for select using (
-  exists (select 1 from public.boards b where b.id = board_id and b.user_id = auth.uid())
-);
+create policy tasks_select_own on public.tasks for select using (exists (select 1 from public.boards b where b.id = board_id and b.user_id = auth.uid()));
 
 drop policy if exists tasks_insert_own on public.tasks;
-create policy tasks_insert_own on public.tasks
-for insert with check (
-  exists (select 1 from public.boards b where b.id = board_id and b.user_id = auth.uid())
-);
+create policy tasks_insert_own on public.tasks for insert with check (exists (select 1 from public.boards b where b.id = board_id and b.user_id = auth.uid()));
 
 drop policy if exists tasks_update_own on public.tasks;
-create policy tasks_update_own on public.tasks
-for update using (
-  exists (select 1 from public.boards b where b.id = board_id and b.user_id = auth.uid())
-);
+create policy tasks_update_own on public.tasks for update using (exists (select 1 from public.boards b where b.id = board_id and b.user_id = auth.uid()));
 
 drop policy if exists tasks_delete_own on public.tasks;
-create policy tasks_delete_own on public.tasks
-for delete using (
-  exists (select 1 from public.boards b where b.id = board_id and b.user_id = auth.uid())
-);
+create policy tasks_delete_own on public.tasks for delete using (exists (select 1 from public.boards b where b.id = board_id and b.user_id = auth.uid()));
